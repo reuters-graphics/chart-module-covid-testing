@@ -5,13 +5,13 @@
 ### Install
 
 ```
-$ yarn add https://github.com/reuters-graphics/chart-module-testingchart.git
+$ yarn add https://github.com/reuters-graphics/chart-module-covid-testing.git
 ```
 
 ### Use
 
 ```javascript
-import TestingChart from '@reuters-graphics/chart-module-testingchart';
+import TestingChart from '@reuters-graphics/chart-module-covid-testing';
 
 const myChart = new TestingChart();
 
@@ -37,7 +37,7 @@ To apply this chart's default styles when using SCSS, simply define the variable
 ```CSS
 $TestingChart-container: '#chart';
 
-@import '~@reuters-graphics/chart-module-testingchart/scss/main';
+@import '~@reuters-graphics/chart-module-covid-testing/scss/main';
 ```
 
 ## Developing chart modules
