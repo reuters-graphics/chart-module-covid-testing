@@ -1,0 +1,35 @@
+$dark-blue: #2f353f;
+$yellow: #fce587;
+$dark-yellow: #eec331;
+$half-white: rgba(255, 255, 255, 0.75);
+$boxshadow: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
+body{
+  background: $dark-blue;
+}
+
+#{$TestingChart-container} {
+
+  /* Write your chart styles here */
+  .domain{
+    display: none;
+  }
+  .axis{
+    text{
+      font-family: $font-family-sans-serif;
+      fill: $half-white;
+      font-size: .8rem;
+    }
+    line{
+      stroke-width: .7;
+      stroke: $half-white;
+    }
+    &.axis--y2{
+      text{
+        fill: $yellow;
+      }
+      line{
+        stroke: $yellow;
+      }
+    }
+  }
+}
