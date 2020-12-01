@@ -17,15 +17,16 @@ const ChartComponent = () => {
 
   // Create a new instance of our chart
   const chart = new Chart();
-
+  
   // This will run every time we change our chart props.
   useEffect(() => {
     // USE OUR CHART!
     chart
       .selection(chartContainer.current)
       .data({
-        cases: caseData['cases'],
-        tests: {...testData.countries['United States'].testingData,series:testData.series},
+        cases: caseData.cases,
+        tests: testData.testingData.test_dailycount,
+        iso: testData.countryISO,
       })
       // .props({ fill })
       .draw();

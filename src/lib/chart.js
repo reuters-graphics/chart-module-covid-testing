@@ -23,9 +23,10 @@ class TestingChart extends ChartComponent {
       date: '%B',
     },
     fills: {
-      cases: 'rgba(255,255,255,.1)',
+      cases: 'rgba(255,255,255,.5)',
       tests: '#fce587'
     },
+    avg_days: 7,
   };
 
   draw() {
@@ -49,8 +50,17 @@ class TestingChart extends ChartComponent {
     const g = svg.appendSelect('g.container')
       .attr('transform', `translate(${props.margin.left}, ${props.margin.top})`);
 
+    data.cases = data.cases.sort((a, b) => (d3.descending(caseParse(a.date), caseParse(b.date))));
+    data.tests = data.tests.sort((a, b) => (d3.descending(caseParse(a.date), caseParse(b.date))));
+
     for (let i = 0; i < data.cases.length; i++) {
-      data.cases[i].parsedDate = caseParse(data.cases[i].date)
+      data.cases[i].parsedDate = caseParse(data.cases[i].date);
+      data.cases[i].mean = d3.mean(data.cases.slice(i, (i + props.avg_days)), d => +d.count < 0 ? 0 : d.count); // avg calc
+    }
+
+    for (let i = 0; i < data.tests.length; i++) {
+      data.tests[i].parsedDate = caseParse(data.tests[i].date);
+      data.tests[i].mean = d3.mean(data.tests.slice(i, (i + props.avg_days)), d => +d.count < 0 ? 0 : d.count); // avg calc
     }
 
     // for (let i = 0; i < data.tests.series.length; i++) {
@@ -65,29 +75,23 @@ class TestingChart extends ChartComponent {
       .domain([0, 1])
       .range([props.height - props.margin.top - props.margin.bottom, 0]);
 
-    const maxCases = d3.max(data.cases, d => d.count);
-    const maxTests = d3.max(data.tests.test_dailycount, d => d ? d : 0);
+    const maxCases = d3.max(data.cases, d => d.mean);
+    const maxTests = d3.max(data.tests, d => d.mean);
 
     const areaCases = d3.line()
       .x(d => xScale(d.parsedDate))
-      .y(d => yScale(d.count / maxCases))
-      // .y0(yScale(0));
+      .y(d => yScale(d.mean / maxCases));
 
     const areaTests = d3.line()
-      .x(function(d, i) {
-        return xScale(testParse(data.tests.series[i]));
-      })
-      .y(function(d, i) {
-        return yScale((data.tests.test_dailycount[i] ? data.tests.test_dailycount[i]:0) / maxTests)
-      })
-      // .y0(yScale(0));
+      .x(d => xScale(d.parsedDate))
+      .y(d => yScale(d.mean / maxTests));
 
     const yScaleCases = d3.scaleLinear()
       .domain([0, d3.max(data.cases, d => d.count)])
       .range([props.height - props.margin.top - props.margin.bottom, props.margin.top]);
 
     const yScaleTests = d3.scaleLinear()
-      .domain([0, d3.max(data.tests.test_dailycount.filter(d => d))])
+      .domain([0, d3.max(data.tests, d => d.count)])
       .range([props.height - props.margin.top - props.margin.bottom, props.margin.top]);
 
     g.appendSelect('g.axis.axis--x')
@@ -102,18 +106,14 @@ class TestingChart extends ChartComponent {
       .call(d3.axisRight(yScaleTests).tickFormat(numberFormat));
 
     g.appendSelect('path.case-area')
-      .style('fill','none')
+      .style('fill', 'none')
       .style('stroke', props.fills.cases)
       .attr('d', areaCases(data.cases));
-    
-    const numlist = []
-    for (let i = 0; i<data.tests.series.length; i++) {
-      numlist.push(i)
-    }
+
     g.appendSelect('path.test-area')
-      .style('fill','none')
+      .style('fill', 'none')
       .style('stroke', props.fills.tests)
-      .attr('d', areaTests(numlist));
+      .attr('d', areaTests(data.tests));
 
     return this;
   }
