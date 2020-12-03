@@ -63,28 +63,30 @@ class TestingChart extends ChartComponent {
       data.tests[i].mean = d3.mean(data.tests.slice(i, (i + props.avg_days)), d => +d.count < 0 ? 0 : d.count); // avg calc
     }
 
-    // for (let i = 0; i < data.tests.series.length; i++) {
-    //   data.tests.series[i] = testParse(data.cases[i].date)
-    // }
+    for (let i = 0; i < data.tests.length; i++) {
+      let caseNum = data.cases.filter(d=> d.date === data.tests[i].date)[0];
+      if (caseNum) {
+        data.tests[i].caseMean = caseNum.mean;
+        data.tests[i].posRate = data.tests[i].caseMean/data.tests[i].mean * 100;
+      }
+    }
+
+    data.tests = data.tests.filter(d=>d.posRate)
 
     const xScale = d3.scaleTime()
       .domain(d3.extent(data.cases, d => d.parsedDate))
       .range([0, width - props.margin.right - props.margin.left]);
 
     const yScale = d3.scaleLinear()
-      .domain([0, 1])
+      .domain([0, 50])
       .range([props.height - props.margin.top - props.margin.bottom, 0]);
 
     const maxCases = d3.max(data.cases, d => d.mean);
     const maxTests = d3.max(data.tests, d => d.mean);
 
-    const areaCases = d3.line()
-      .x(d => xScale(d.parsedDate))
-      .y(d => yScale(d.mean / maxCases));
-
     const areaTests = d3.line()
       .x(d => xScale(d.parsedDate))
-      .y(d => yScale(d.mean / maxTests));
+      .y(d => yScale(d.posRate));
 
     const yScaleCases = d3.scaleLinear()
       .domain([0, d3.max(data.cases, d => d.count)])
@@ -98,17 +100,17 @@ class TestingChart extends ChartComponent {
       .attr('transform', `translate(0,${props.height - props.margin.top - props.margin.bottom})`)
       .call(d3.axisBottom(xScale).ticks(5).tickFormat(dateFormat));
 
+    // g.appendSelect('g.axis.axis--y.axis--y1')
+    //   .call(d3.axisLeft(yScaleCases).tickFormat(numberFormat));
+
     g.appendSelect('g.axis.axis--y.axis--y1')
-      .call(d3.axisLeft(yScaleCases).tickFormat(numberFormat));
-
-    g.appendSelect('g.axis.axis--y.axis--y2')
       .attr('transform', `translate(${width - props.margin.left - props.margin.right},0)`)
-      .call(d3.axisRight(yScaleTests).tickFormat(numberFormat));
+      .call(d3.axisRight(yScale).ticks(5));
 
-    g.appendSelect('path.case-area')
-      .style('fill', 'none')
-      .style('stroke', props.fills.cases)
-      .attr('d', areaCases(data.cases));
+    // g.appendSelect('path.case-area')
+    //   .style('fill', 'none')
+    //   .style('stroke', props.fills.cases)
+    //   .attr('d', areaCases(data.cases));
 
     g.appendSelect('path.test-area')
       .style('fill', 'none')
