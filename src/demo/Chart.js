@@ -4,8 +4,7 @@ import Chart from '../lib/chart.js';
 import ChartContainer from './furniture/ChartContainer';
 import { base } from '@reuters-graphics/style-color/dist/categorical';
 import debounce from 'lodash/debounce';
-import testData from './tests';
-import caseData from './cases';
+import data from './testFile';
 
 const ChartComponent = () => {
   const [width, setWidth] = useState('');
@@ -23,11 +22,7 @@ const ChartComponent = () => {
     // USE OUR CHART!
     chart
       .selection(chartContainer.current)
-      .data({
-        cases: caseData.cases,
-        tests: testData.testingData.test_dailycount,
-        iso: testData.countryISO,
-      })
+      .data(data.filter(d=>d.positivityRate.filter(e=>e!=null).length==3))
       // .props({ fill })
       .draw();
   });

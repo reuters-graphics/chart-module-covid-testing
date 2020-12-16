@@ -9,12 +9,12 @@ class TestingChart extends ChartComponent {
     stroke: '#aaa',
     strokeWidth: 1,
     fill: 'steelblue',
-    height: 400,
+    height: 300,
     margin: {
       left: 50,
       right: 50,
-      top: 0,
-      bottom: 30,
+      top: 50,
+      bottom: 50,
     },
     formatters: {
       caseTime: '%Y-%m-%d',
@@ -22,11 +22,16 @@ class TestingChart extends ChartComponent {
       number: '.2s',
       date: '%B',
     },
+    padding: 1,
     fills: {
       cases: 'rgba(255,255,255,.5)',
-      tests: '#fce587'
+      tests: '#fce587',
+      recommended: 'rgba(255,255,255,.3)'
     },
+    maxLim: .5,
     avg_days: 7,
+    recommended: .05,
+    labelBreaks: .1
   };
 
   draw() {
@@ -34,10 +39,9 @@ class TestingChart extends ChartComponent {
     const props = this.props();
     const node = this.selection().node();
     const { width } = node.getBoundingClientRect();
-    const caseParse = d3.timeParse(props.formatters.caseTime);
-    const testParse = d3.timeParse(props.formatters.testTime);
-    const numberFormat = d3.format(props.formatters.number);
-    const dateFormat = d3.timeFormat(props.formatters.date);
+    const rScale = d3.scaleSqrt()
+      .range([1,30])
+      .domain([1,d3.max(data, d=>d.testMeans.currentMean.mean)])
 
     const transition = d3.transition()
       .duration(750);
@@ -47,76 +51,60 @@ class TestingChart extends ChartComponent {
       .attr('width', width)
       .attr('height', props.height)
 
+    // const scaleX = d3.scaleLinear()
+    //   .domain(this.minMax)
+    //   .range([this.margin.left, this.width]);
+    const scaleX = d3.scaleLinear()
+      .domain([0, props.maxLim])
+      .range([0,width - props.margin.left - props.margin.right]);
+
     const g = svg.appendSelect('g.container')
       .attr('transform', `translate(${props.margin.left}, ${props.margin.top})`);
 
-    data.cases = data.cases.sort((a, b) => (d3.descending(caseParse(a.date), caseParse(b.date))));
-    data.tests = data.tests.sort((a, b) => (d3.descending(caseParse(a.date), caseParse(b.date))));
+    g.appendSelect('line.recommended')
+      .attr('x1', scaleX(props.recommended))
+      .attr('x2', scaleX(props.recommended))
+      .attr('y1', 0)
+      .attr('y2', props.height-props.margin.top)
+      .style('stroke',props.fills.recommended)
 
-    for (let i = 0; i < data.cases.length; i++) {
-      data.cases[i].parsedDate = caseParse(data.cases[i].date);
-      data.cases[i].mean = d3.mean(data.cases.slice(i, (i + props.avg_days)), d => +d.count < 0 ? 0 : d.count); // avg calc
-    }
+    const circles = g.appendSelect('g.nodes')
+      .selectAll('circle')
+      .data(data, (d, i) => i);
 
-    for (let i = 0; i < data.tests.length; i++) {
-      data.tests[i].parsedDate = caseParse(data.tests[i].date);
-      data.tests[i].mean = d3.mean(data.tests.slice(i, (i + props.avg_days)), d => +d.count < 0 ? 0 : d.count); // avg calc
-    }
+    const simulation = d3.forceSimulation(data)
+      .force('x', d3.forceX(d => scaleX(d.positivityRate[2])))
+      .force('y', d3.forceY(props.height/2))
+      .force('collide', d3.forceCollide(d=>rScale(d.testMeans.currentMean.mean)+props.padding))
+      .stop();
 
-    for (let i = 0; i < data.tests.length; i++) {
-      let caseNum = data.cases.filter(d=> d.date === data.tests[i].date)[0];
-      if (caseNum) {
-        data.tests[i].caseMean = caseNum.mean;
-        data.tests[i].posRate = data.tests[i].caseMean/data.tests[i].mean * 100;
-      }
-    }
+    for (var i = 0; i < 500; ++i) simulation.tick();
 
-    data.tests = data.tests.filter(d=>d.posRate)
+    circles.enter().append('circle')
+      .style('fill', (d) => {
+        if (d.positivityRate[2] > d.positivityRate[1] && d.positivityRate[1]>d.positivityRate[0]) {
+          return '#EE665B';
+        } else if (d.positivityRate[2] < d.positivityRate[1] && d.positivityRate[1]<d.positivityRate[0]) {
+          return '#74C476';
+        } else {
+          return 'rgba(255,255,255,.8)';
+        }
+      })
+      .attr('cx', d=> d.x)
+      .attr('cy', d=> d.y)
+      .merge(circles)
+      .attr('id', d => d.id)
+      .attr('cx', d => d.x)
+      .attr('cy', d => d.y)
+      .attr('r', d => rScale(d.testMeans.currentMean.mean))
+      .on('click', (d) => {console.log(d) });
 
-    const xScale = d3.scaleTime()
-      .domain(d3.extent(data.cases, d => d.parsedDate))
-      .range([0, width - props.margin.right - props.margin.left]);
-
-    const yScale = d3.scaleLinear()
-      .domain([0, 50])
-      .range([props.height - props.margin.top - props.margin.bottom, 0]);
-
-    const maxCases = d3.max(data.cases, d => d.mean);
-    const maxTests = d3.max(data.tests, d => d.mean);
-
-    const areaTests = d3.line()
-      .x(d => xScale(d.parsedDate))
-      .y(d => yScale(d.posRate));
-
-    const yScaleCases = d3.scaleLinear()
-      .domain([0, d3.max(data.cases, d => d.count)])
-      .range([props.height - props.margin.top - props.margin.bottom, props.margin.top]);
-
-    const yScaleTests = d3.scaleLinear()
-      .domain([0, d3.max(data.tests, d => d.count)])
-      .range([props.height - props.margin.top - props.margin.bottom, props.margin.top]);
+    circles.exit()
+      .attr('r', 0)
+      .remove();
 
     g.appendSelect('g.axis.axis--x')
-      .attr('transform', `translate(0,${props.height - props.margin.top - props.margin.bottom})`)
-      .call(d3.axisBottom(xScale).ticks(5).tickFormat(dateFormat));
-
-    // g.appendSelect('g.axis.axis--y.axis--y1')
-    //   .call(d3.axisLeft(yScaleCases).tickFormat(numberFormat));
-
-    g.appendSelect('g.axis.axis--y.axis--y1')
-      .attr('transform', `translate(${width - props.margin.left - props.margin.right},0)`)
-      .call(d3.axisRight(yScale).ticks(5));
-
-    // g.appendSelect('path.case-area')
-    //   .style('fill', 'none')
-    //   .style('stroke', props.fills.cases)
-    //   .attr('d', areaCases(data.cases));
-
-    g.appendSelect('path.test-area')
-      .style('fill', 'none')
-      .style('stroke', props.fills.tests)
-      .attr('d', areaTests(data.tests));
-
+      .call(d3.axisTop(scaleX))
     return this;
   }
 }
