@@ -8,10 +8,16 @@ body{
 }
 
 #{$TestingChart-container} {
-
+  .ref-label{
+    font-size: .9rem;
+  }
   /* Write your chart styles here */
   .domain{
     display: none;
+  }
+  .base-line{
+    stroke: $half-white;
+    stroke-width: 1;
   }
   .axis{
     text{

@@ -13,8 +13,11 @@ class TestingChart extends ChartComponent {
     margin: {
       left: 50,
       right: 50,
-      top: 0,
+      top: 10,
       bottom: 30,
+    },
+    range: {
+      startDate: '2020-03-01'
     },
     formatters: {
       caseTime: '%Y-%m-%d',
@@ -23,10 +26,17 @@ class TestingChart extends ChartComponent {
       date: '%B',
     },
     fills: {
-      cases: 'rgba(255,255,255,.5)',
-      tests: '#fce587'
+      tests: '#eec331',
+      refbox: 'rgba(255,255,255,.1)',
+      label: 'rgba(255,255,255,.9)',
     },
+
     avg_days: 7,
+    refBox: { y1: 0, y2: 5 },
+    refLabel: {
+      text: 'W.H.O. recommendation'
+    },
+    lineThickness: 2,
   };
 
   draw() {
@@ -71,14 +81,18 @@ class TestingChart extends ChartComponent {
       }
     }
 
-    data.tests = data.tests.filter(d=>d.posRate)
+    const parsedStartDate = caseParse(props.range.startDate);
+
+    data.tests = data.tests.filter(d=>d.posRate && d.parsedDate >= parsedStartDate)
 
     const xScale = d3.scaleTime()
-      .domain(d3.extent(data.cases, d => d.parsedDate))
+      .domain(d3.extent(data.tests, d => d.parsedDate))
       .range([0, width - props.margin.right - props.margin.left]);
 
+    let maxY = d3.max(data.tests, d=>d.posRate)
+    maxY = maxY<8?10:maxY
     const yScale = d3.scaleLinear()
-      .domain([0, 50])
+      .domain([0, maxY])
       .range([props.height - props.margin.top - props.margin.bottom, 0]);
 
     const maxCases = d3.max(data.cases, d => d.mean);
@@ -87,14 +101,6 @@ class TestingChart extends ChartComponent {
     const areaTests = d3.line()
       .x(d => xScale(d.parsedDate))
       .y(d => yScale(d.posRate));
-
-    const yScaleCases = d3.scaleLinear()
-      .domain([0, d3.max(data.cases, d => d.count)])
-      .range([props.height - props.margin.top - props.margin.bottom, props.margin.top]);
-
-    const yScaleTests = d3.scaleLinear()
-      .domain([0, d3.max(data.tests, d => d.count)])
-      .range([props.height - props.margin.top - props.margin.bottom, props.margin.top]);
 
     g.appendSelect('g.axis.axis--x')
       .attr('transform', `translate(0,${props.height - props.margin.top - props.margin.bottom})`)
@@ -105,18 +111,43 @@ class TestingChart extends ChartComponent {
 
     g.appendSelect('g.axis.axis--y.axis--y1')
       .attr('transform', `translate(${width - props.margin.left - props.margin.right},0)`)
-      .call(d3.axisRight(yScale).ticks(5));
+      .call(d3.axisRight(yScale).ticks(5).tickFormat((d,i)=>i==4?`${d}%`:d));
 
+    g.appendSelect('line.base-line')
+      .attr('x1', 0)
+      .attr('x2', width - props.margin.left - props.margin.right)
+      .attr('y1', yScale(0)+.5)
+      .attr('y2', yScale(0)+.5);
     // g.appendSelect('path.case-area')
     //   .style('fill', 'none')
     //   .style('stroke', props.fills.cases)
     //   .attr('d', areaCases(data.cases));
 
+    g.appendSelect('rect.refBox')
+      .style('fill',props.fills.refbox)
+      .attr('x', 0)
+      .attr('width', width - props.margin.left - props.margin.right)
+      .attr('y', yScale(props.refBox.y2))
+      .attr('height', yScale(props.refBox.y1) - yScale(props.refBox.y2));
+
     g.appendSelect('path.test-area')
       .style('fill', 'none')
       .style('stroke', props.fills.tests)
+      .style('stroke-width',props.lineThickness)
       .attr('d', areaTests(data.tests));
 
+    const labelG = g.appendSelect('g.ref-label')
+      .appendSelect('text')
+      .style('fill',props.fills.label)
+      .text(props.refLabel.text);
+
+    if (data.tests[0].posRate >= 2) {
+      labelG.attr('transform', `translate(${(width - props.margin.left - props.margin.right) - 20},${(props.height - props.margin.top - props.margin.bottom) * .93})`)
+        .style('text-anchor', 'end');
+    } else {
+      labelG.attr('transform', `translate(${width / 25},${(props.height-props.margin.top-props.margin.bottom)*.93})`)
+        .style('text-anchor', 'start');
+    }
     return this;
   }
 }
