@@ -17,7 +17,7 @@ class TestingChart extends ChartComponent {
       bottom: 30,
     },
     range: {
-      startDate: '2020-03-01'
+      startDate: '2020-03-01',
     },
     formatters: {
       caseTime: '%Y-%m-%d',
@@ -45,7 +45,6 @@ class TestingChart extends ChartComponent {
     const node = this.selection().node();
     const { width } = node.getBoundingClientRect();
     const caseParse = d3.timeParse(props.formatters.caseTime);
-    const testParse = d3.timeParse(props.formatters.testTime);
     const numberFormat = d3.format(props.formatters.number);
     const dateFormat = d3.timeFormat(props.formatters.date);
 
@@ -90,7 +89,7 @@ class TestingChart extends ChartComponent {
       .range([0, width - props.margin.right - props.margin.left]);
 
     let maxY = d3.max(data.tests, d=>d.posRate)
-    maxY = maxY<8?10:maxY
+    maxY = maxY<8?8:maxY
     const yScale = d3.scaleLinear()
       .domain([0, maxY])
       .range([props.height - props.margin.top - props.margin.bottom, 0]);
@@ -106,9 +105,6 @@ class TestingChart extends ChartComponent {
       .attr('transform', `translate(0,${props.height - props.margin.top - props.margin.bottom})`)
       .call(d3.axisBottom(xScale).ticks(5).tickFormat(dateFormat));
 
-    // g.appendSelect('g.axis.axis--y.axis--y1')
-    //   .call(d3.axisLeft(yScaleCases).tickFormat(numberFormat));
-
     g.appendSelect('g.axis.axis--y.axis--y1')
       .attr('transform', `translate(${width - props.margin.left - props.margin.right},0)`)
       .call(d3.axisRight(yScale).ticks(5).tickFormat((d,i)=>i==4?`${d}%`:d));
@@ -118,13 +114,9 @@ class TestingChart extends ChartComponent {
       .attr('x2', width - props.margin.left - props.margin.right)
       .attr('y1', yScale(0)+.5)
       .attr('y2', yScale(0)+.5);
-    // g.appendSelect('path.case-area')
-    //   .style('fill', 'none')
-    //   .style('stroke', props.fills.cases)
-    //   .attr('d', areaCases(data.cases));
 
     g.appendSelect('rect.refBox')
-      .style('fill',props.fills.refbox)
+      .style('fill', props.fills.refbox)
       .attr('x', 0)
       .attr('width', width - props.margin.left - props.margin.right)
       .attr('y', yScale(props.refBox.y2))
@@ -133,20 +125,20 @@ class TestingChart extends ChartComponent {
     g.appendSelect('path.test-area')
       .style('fill', 'none')
       .style('stroke', props.fills.tests)
-      .style('stroke-width',props.lineThickness)
+      .style('stroke-width', props.lineThickness)
       .attr('d', areaTests(data.tests));
 
     const labelG = g.appendSelect('g.ref-label')
       .appendSelect('text')
-      .style('fill',props.fills.label)
+      .style('fill', props.fills.label)
       .text(props.refLabel.text);
 
     if (data.tests[0].posRate >= 2) {
       labelG.attr('transform', `translate(${(width - props.margin.left - props.margin.right) - 20},${(props.height - props.margin.top - props.margin.bottom) * .93})`)
         .style('text-anchor', 'end');
     } else {
-      labelG.attr('transform', `translate(${width / 25},${(props.height-props.margin.top-props.margin.bottom)*.93})`)
-        .style('text-anchor', 'start');
+      labelG.attr('transform', `translate(${(width - props.margin.left - props.margin.right) - 20},${(props.height-props.margin.top-props.margin.bottom)*.5})`)
+        .style('text-anchor', 'end');
     }
     return this;
   }

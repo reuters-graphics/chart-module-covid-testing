@@ -17,7 +17,7 @@ const ChartComponent = () => {
 
   // Create a new instance of our chart
   const chart = new Chart();
-  
+
   // This will run every time we change our chart props.
   useEffect(() => {
     // USE OUR CHART!
