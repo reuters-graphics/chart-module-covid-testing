@@ -19,13 +19,50 @@ const myChart = new TestingChart();
 // as well as any props or data to their respective methods. Then call draw.
 myChart
   .selection('#chart')
-  .data([1, 2, 3])
-  .props({ stroke: 'orange' })
-  .draw();
-
-// You can call any method again to update the chart.
-myChart
-  .data([3, 4, 5])
+  .data({
+        cases: caseData.cases,
+        tests: testData.testingData.test_dailycount,
+        iso: testData.countryISO,
+      })
+  .props({ 
+    // chart height
+    height: 400,
+    // margins
+    margin: {
+      left: 50,
+      right: 50,
+      top: 10,
+      bottom: 30,
+    },
+    // if there is a specific start date for the chart
+    range: {
+      startDate: '2020-03-01',
+    },
+    formatters: {
+      // time format in data
+      caseTime: '%Y-%m-%d',
+      // date format in x axis
+      date: '%B',
+    },
+    fills: {
+      // line fill
+      tests: '#eec331',
+      // ref box fill
+      refbox: 'rgba(255,255,255,.1)',
+      // ref box label fill
+      label: 'rgba(255,255,255,.9)',
+    },
+    // rolling avg of how many days
+    avg_days: 7,
+    // ref box range
+    refBox: { y1: 0, y2: 5 },
+    refLabel: {
+      // ref label text
+      text: 'W.H.O. recommendation'
+    },
+    // stroke width for line
+    lineThickness: 2, 
+  })
   .draw();
 
 // Or just call the draw function alone, which is useful for resizing the chart.

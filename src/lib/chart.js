@@ -6,9 +6,6 @@ import ChartComponent from './base/ChartComponent';
 
 class TestingChart extends ChartComponent {
   defaultProps = {
-    stroke: '#aaa',
-    strokeWidth: 1,
-    fill: 'steelblue',
     height: 400,
     margin: {
       left: 50,
@@ -21,8 +18,6 @@ class TestingChart extends ChartComponent {
     },
     formatters: {
       caseTime: '%Y-%m-%d',
-      testTime: '%Y-%m-%dT%H:%M:%S%Z',
-      number: '.2s',
       date: '%B',
     },
     fills: {
@@ -45,7 +40,6 @@ class TestingChart extends ChartComponent {
     const node = this.selection().node();
     const { width } = node.getBoundingClientRect();
     const caseParse = d3.timeParse(props.formatters.caseTime);
-    const numberFormat = d3.format(props.formatters.number);
     const dateFormat = d3.timeFormat(props.formatters.date);
 
     const transition = d3.transition()
@@ -97,7 +91,7 @@ class TestingChart extends ChartComponent {
     const maxCases = d3.max(data.cases, d => d.mean);
     const maxTests = d3.max(data.tests, d => d.mean);
 
-    const areaTests = d3.line()
+    const lineTests = d3.line()
       .x(d => xScale(d.parsedDate))
       .y(d => yScale(d.posRate));
 
@@ -126,7 +120,7 @@ class TestingChart extends ChartComponent {
       .style('fill', 'none')
       .style('stroke', props.fills.tests)
       .style('stroke-width', props.lineThickness)
-      .attr('d', areaTests(data.tests));
+      .attr('d', lineTests(data.tests));
 
     const labelG = g.appendSelect('g.ref-label')
       .appendSelect('text')
