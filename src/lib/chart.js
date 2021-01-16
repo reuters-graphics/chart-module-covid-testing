@@ -1,5 +1,3 @@
-import 'd3-appendselect';
-
 import * as d3 from 'd3';
 
 import ChartComponent from './base/ChartComponent';
@@ -29,7 +27,7 @@ class TestingChart extends ChartComponent {
     avg_days: 7,
     refBox: { y1: 0, y2: 5 },
     refLabel: {
-      text: 'W.H.O. recommendation'
+      text: 'W.H.O. recommendation',
     },
     lineThickness: 2,
   };
@@ -48,7 +46,7 @@ class TestingChart extends ChartComponent {
     const svg = this.selection()
       .appendSelect('svg') // see docs in ./utils/d3.js
       .attr('width', width)
-      .attr('height', props.height)
+      .attr('height', props.height);
 
     const g = svg.appendSelect('g.container')
       .attr('transform', `translate(${props.margin.left}, ${props.margin.top})`);
@@ -67,23 +65,23 @@ class TestingChart extends ChartComponent {
     }
 
     for (let i = 0; i < data.tests.length; i++) {
-      let caseNum = data.cases.filter(d=> d.date === data.tests[i].date)[0];
+      const caseNum = data.cases.filter(d => d.date === data.tests[i].date)[0];
       if (caseNum) {
         data.tests[i].caseMean = caseNum.mean;
-        data.tests[i].posRate = data.tests[i].caseMean/data.tests[i].mean * 100;
+        data.tests[i].posRate = data.tests[i].caseMean / data.tests[i].mean * 100;
       }
     }
 
     const parsedStartDate = caseParse(props.range.startDate);
 
-    data.tests = data.tests.filter(d=>d.posRate && d.parsedDate >= parsedStartDate)
+    data.tests = data.tests.filter(d => d.posRate && d.parsedDate >= parsedStartDate);
 
     const xScale = d3.scaleTime()
       .domain(d3.extent(data.tests, d => d.parsedDate))
       .range([0, width - props.margin.right - props.margin.left]);
 
-    let maxY = d3.max(data.tests, d=>d.posRate)
-    maxY = maxY<8?8:maxY
+    let maxY = d3.max(data.tests, d => d.posRate);
+    maxY = maxY < 8 ? 8 : maxY;
     const yScale = d3.scaleLinear()
       .domain([0, maxY])
       .range([props.height - props.margin.top - props.margin.bottom, 0]);
@@ -101,13 +99,13 @@ class TestingChart extends ChartComponent {
 
     g.appendSelect('g.axis.axis--y.axis--y1')
       .attr('transform', `translate(${width - props.margin.left - props.margin.right},0)`)
-      .call(d3.axisRight(yScale).ticks(5).tickFormat((d,i)=>i==4?`${d}%`:d));
+      .call(d3.axisRight(yScale).ticks(5).tickFormat((d, i) => i == 4 ? `${d}%` : d));
 
     g.appendSelect('line.base-line')
       .attr('x1', 0)
       .attr('x2', width - props.margin.left - props.margin.right)
-      .attr('y1', yScale(0)+.5)
-      .attr('y2', yScale(0)+.5);
+      .attr('y1', yScale(0) + 0.5)
+      .attr('y2', yScale(0) + 0.5);
 
     g.appendSelect('rect.refBox')
       .style('fill', props.fills.refbox)
@@ -128,10 +126,10 @@ class TestingChart extends ChartComponent {
       .text(props.refLabel.text);
 
     if (data.tests[0].posRate >= 2) {
-      labelG.attr('transform', `translate(${(width - props.margin.left - props.margin.right) - 20},${(props.height - props.margin.top - props.margin.bottom) * .93})`)
+      labelG.attr('transform', `translate(${(width - props.margin.left - props.margin.right) - 20},${(props.height - props.margin.top - props.margin.bottom) * 0.93})`)
         .style('text-anchor', 'end');
     } else {
-      labelG.attr('transform', `translate(${(width - props.margin.left - props.margin.right) - 20},${(props.height-props.margin.top-props.margin.bottom)*.5})`)
+      labelG.attr('transform', `translate(${(width - props.margin.left - props.margin.right) - 20},${(props.height - props.margin.top - props.margin.bottom) * 0.5})`)
         .style('text-anchor', 'end');
     }
     return this;
