@@ -2982,7 +2982,10 @@ var TestingChart = /*#__PURE__*/function (_ChartComponent) {
       var parsedStartDate = caseParse(props.range.startDate);
       data.tests = data.tests.filter(function (d) {
         return d.posRate && d.parsedDate >= parsedStartDate;
-      });
+      }); // Little trick so that I can pass this parsed/calced data outside the chart
+      // to things like smarttext.
+
+      this.testingData = data.tests;
       var xScale = d3.scaleTime().domain(d3.extent(data.tests, function (d) {
         return d.parsedDate;
       })).range([0, width - props.margin.right - props.margin.left]);

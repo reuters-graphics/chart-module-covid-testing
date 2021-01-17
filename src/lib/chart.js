@@ -76,6 +76,10 @@ class TestingChart extends ChartComponent {
 
     data.tests = data.tests.filter(d => d.posRate && d.parsedDate >= parsedStartDate);
 
+    // Little trick so that I can pass this parsed/calced data outside the chart
+    // to things like smarttext.
+    this.testingData = data.tests;
+
     const xScale = d3.scaleTime()
       .domain(d3.extent(data.tests, d => d.parsedDate))
       .range([0, width - props.margin.right - props.margin.left]);
