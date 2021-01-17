@@ -1,6 +1,7 @@
 import * as d3 from 'd3';
 
 import ChartComponent from './base/ChartComponent';
+import maxBy from 'lodash/maxBy';
 
 class TestingChart extends ChartComponent {
   defaultProps = {
@@ -78,7 +79,7 @@ class TestingChart extends ChartComponent {
 
     // Little trick so that I can pass this parsed/calced data outside the chart
     // to things like smarttext.
-    this.maxTestingDate = { ...d3.max(data.tests, d => d.posRate) };
+    this.maxTestingDate = { ...maxBy(data.tests, d => d.posRate) };
 
     const xScale = d3.scaleTime()
       .domain(d3.extent(data.tests, d => d.parsedDate))

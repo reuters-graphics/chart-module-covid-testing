@@ -5,6 +5,7 @@ function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'defau
 var d3 = require('d3');
 var d3Appendselect = require('d3-appendselect');
 var merge = _interopDefault(require('lodash/merge'));
+var maxBy = _interopDefault(require('lodash/maxBy'));
 
 function _classCallCheck(instance, Constructor) {
   if (!(instance instanceof Constructor)) {
@@ -3019,7 +3020,7 @@ var TestingChart = /*#__PURE__*/function (_ChartComponent) {
       }); // Little trick so that I can pass this parsed/calced data outside the chart
       // to things like smarttext.
 
-      this.maxTestingDate = _objectSpread2({}, d3.max(data.tests, function (d) {
+      this.maxTestingDate = _objectSpread2({}, maxBy(data.tests, function (d) {
         return d.posRate;
       }));
       var xScale = d3.scaleTime().domain(d3.extent(data.tests, function (d) {
