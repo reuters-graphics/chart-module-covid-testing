@@ -2985,7 +2985,7 @@ var TestingChart = /*#__PURE__*/function (_ChartComponent) {
       }); // Little trick so that I can pass this parsed/calced data outside the chart
       // to things like smarttext.
 
-      this.testingData = data.tests;
+      this.testingData = data.tests.slice();
       var xScale = d3.scaleTime().domain(d3.extent(data.tests, function (d) {
         return d.parsedDate;
       })).range([0, width - props.margin.right - props.margin.left]);

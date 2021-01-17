@@ -78,7 +78,7 @@ class TestingChart extends ChartComponent {
 
     // Little trick so that I can pass this parsed/calced data outside the chart
     // to things like smarttext.
-    this.testingData = data.tests;
+    this.testingData = data.tests.slice();
 
     const xScale = d3.scaleTime()
       .domain(d3.extent(data.tests, d => d.parsedDate))
