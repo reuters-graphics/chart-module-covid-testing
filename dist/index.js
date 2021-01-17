@@ -43,6 +43,40 @@ function _defineProperty(obj, key, value) {
   return obj;
 }
 
+function ownKeys(object, enumerableOnly) {
+  var keys = Object.keys(object);
+
+  if (Object.getOwnPropertySymbols) {
+    var symbols = Object.getOwnPropertySymbols(object);
+    if (enumerableOnly) symbols = symbols.filter(function (sym) {
+      return Object.getOwnPropertyDescriptor(object, sym).enumerable;
+    });
+    keys.push.apply(keys, symbols);
+  }
+
+  return keys;
+}
+
+function _objectSpread2(target) {
+  for (var i = 1; i < arguments.length; i++) {
+    var source = arguments[i] != null ? arguments[i] : {};
+
+    if (i % 2) {
+      ownKeys(Object(source), true).forEach(function (key) {
+        _defineProperty(target, key, source[key]);
+      });
+    } else if (Object.getOwnPropertyDescriptors) {
+      Object.defineProperties(target, Object.getOwnPropertyDescriptors(source));
+    } else {
+      ownKeys(Object(source)).forEach(function (key) {
+        Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key));
+      });
+    }
+  }
+
+  return target;
+}
+
 function _inherits(subClass, superClass) {
   if (typeof superClass !== "function" && superClass !== null) {
     throw new TypeError("Super expression must either be null or a function");
@@ -2985,7 +3019,9 @@ var TestingChart = /*#__PURE__*/function (_ChartComponent) {
       }); // Little trick so that I can pass this parsed/calced data outside the chart
       // to things like smarttext.
 
-      this.testingData = data.tests.slice();
+      this.maxTestingDate = _objectSpread2({}, d3.max(data.tests, function (d) {
+        return d.posRate;
+      }));
       var xScale = d3.scaleTime().domain(d3.extent(data.tests, function (d) {
         return d.parsedDate;
       })).range([0, width - props.margin.right - props.margin.left]);
