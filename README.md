@@ -43,6 +43,10 @@ myChart
       caseTime: '%Y-%m-%d',
       // date format in x axis
       date: '%B',
+      // Function to format number in tooltip
+      tooltipNumberFormatter: d => d3.format(',')(d),
+      // Function to format date in tooltip
+      tooltipDateFormatter: d => d3.timeFormat("%b %e, %Y")(d),
     },
     fills: {
       // line fill
@@ -62,6 +66,10 @@ myChart
     },
     // stroke width for line
     lineThickness: 2, 
+    text: {
+      avg: '{{ average }}-day average',
+      tooltip: 'Positivity rate of {{ rate }}% with a 7-day average of {{ cases }} cases and {{ tests }} tests'
+    }
   })
   .draw();
 

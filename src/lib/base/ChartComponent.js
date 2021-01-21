@@ -1,12 +1,17 @@
+import 'd3-transition';
+
+import * as d3 from 'd3-selection';
+
 import {
-  ErrorDataType,
   ErrorDrawMethodUndefined,
   ErrorPropsType,
   ErrorSelectorType
 } from './errorClasses';
 
+import { appendSelect } from 'd3-appendselect';
 import merge from 'lodash/merge';
-import { select } from 'd3-selection';
+
+d3.selection.prototype.appendSelect = appendSelect;
 
 class ChartComponent {
   constructor(selector, props, data) {
@@ -26,7 +31,7 @@ class ChartComponent {
       throw new ErrorSelectorType(this.constructor.name);
     }
 
-    this._selection = select(selector);
+    this._selection = d3.select(selector);
     return this;
   }
 
