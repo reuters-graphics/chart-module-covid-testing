@@ -5,6 +5,8 @@ function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'defau
 require('d3-appendselect');
 var d3 = require('d3');
 var merge = _interopDefault(require('lodash/merge'));
+var Mustache = _interopDefault(require('mustache'));
+var lodash = require('lodash');
 
 function _classCallCheck(instance, Constructor) {
   if (!(instance instanceof Constructor)) {
@@ -1236,13 +1238,23 @@ var TestingChart = /*#__PURE__*/function (_ChartComponent) {
       },
       formatters: {
         caseTime: '%Y-%m-%d',
-        date: '%B'
+        date: '%B',
+        date_tooltip: '%B %e',
+        tooltipNumberFormatter: function tooltipNumberFormatter(d) {
+          return d3.format(',')(d);
+        },
+        tooltipDateFormatter: function tooltipDateFormatter(d) {
+          return d3.timeFormat("%b %e, %Y")(d);
+        }
       },
+      labels: true,
       fills: {
         tests: '#eec331',
         refbox: 'rgba(255,255,255,.1)',
         label: 'rgba(255,255,255,.9)'
       },
+      tooltip_default: 'top',
+      // other options auto or bottom
       avg_days: 7,
       refBox: {
         y1: 0,
@@ -1251,7 +1263,11 @@ var TestingChart = /*#__PURE__*/function (_ChartComponent) {
       refLabel: {
         text: 'W.H.O. recommendation'
       },
-      lineThickness: 2
+      lineThickness: 2,
+      text: {
+        avg: '{{ average }}-day average',
+        tooltip: 'Positivity rate of {{ rate }}% with a 7-day average of {{ cases }} cases and {{ tests }} tests'
+      }
     });
 
     return _this;
@@ -1269,6 +1285,7 @@ var TestingChart = /*#__PURE__*/function (_ChartComponent) {
 
       var caseParse = d3.timeParse(props.formatters.caseTime);
       var dateFormat = d3.timeFormat(props.formatters.date);
+      var dateFormatMatch = d3.timeFormat('%Y-%m-%d');
       var transition = d3.transition().duration(750);
       var svg = this.selection().appendSelect('svg') // see docs in ./utils/d3.js
       .attr('width', width).attr('height', props.height);
@@ -1320,31 +1337,117 @@ var TestingChart = /*#__PURE__*/function (_ChartComponent) {
         return d.posRate;
       });
       maxY = maxY < 8 ? 8 : maxY;
-      var yScale = d3.scaleLinear().domain([0, maxY]).range([props.height - props.margin.top - props.margin.bottom, 0]);
-      var maxCases = d3.max(data.cases, function (d) {
-        return d.mean;
-      });
-      var maxTests = d3.max(data.tests, function (d) {
-        return d.mean;
-      });
+      var yScale = d3.scaleLinear().domain([maxY, 0]).range([0, props.height - props.margin.top - props.margin.bottom]);
       var lineTests = d3.line().x(function (d) {
         return xScale(d.parsedDate);
       }).y(function (d) {
         return yScale(d.posRate);
       });
       g.appendSelect('g.axis.axis--x').attr('transform', "translate(0,".concat(props.height - props.margin.top - props.margin.bottom, ")")).call(d3.axisBottom(xScale).ticks(5).tickFormat(dateFormat));
-      g.appendSelect('g.axis.axis--y.axis--y1').attr('transform', "translate(".concat(width - props.margin.left - props.margin.right, ",0)")).call(d3.axisRight(yScale).ticks(5).tickFormat(function (d, i) {
-        return i == 4 ? "".concat(d, "%") : d;
+      var yAxis = g.appendSelect('g.axis.axis--y.axis--y1').attr('transform', "translate(".concat(width - props.margin.left - props.margin.right, ",0)")).call(d3.axisRight(yScale).ticks(5).tickFormat(function (d, i) {
+        return i == 0 ? "".concat(d, "%") : d;
       }));
-      g.appendSelect('line.base-line').attr('x1', 0).attr('x2', width - props.margin.left - props.margin.right).attr('y1', yScale(0) + .5).attr('y2', yScale(0) + .5);
       g.appendSelect('rect.refBox').style('fill', props.fills.refbox).attr('x', 0).attr('width', width - props.margin.left - props.margin.right).attr('y', yScale(props.refBox.y2)).attr('height', yScale(props.refBox.y1) - yScale(props.refBox.y2));
       g.appendSelect('path.test-area').style('fill', 'none').style('stroke', props.fills.tests).style('stroke-width', props.lineThickness).attr('d', lineTests(data.tests));
       var labelG = g.appendSelect('g.ref-label').appendSelect('text').style('fill', props.fills.label).text(props.refLabel.text);
 
       if (data.tests[0].posRate >= 2) {
-        labelG.attr('transform', "translate(".concat(width - props.margin.left - props.margin.right - 20, ",").concat((props.height - props.margin.top - props.margin.bottom) * .93, ")")).style('text-anchor', 'end');
+        labelG.attr('transform', "translate(".concat(width - props.margin.left - props.margin.right - 10, ",").concat((props.height - props.margin.top - props.margin.bottom) * .96, ")")).style('text-anchor', 'end');
+      } else if (data.tests[0].posRate < 5) {
+        labelG.attr('transform', "translate(".concat(width - props.margin.left - props.margin.right - 10, ",").concat(yScale(5.2), ")")).style('text-anchor', 'end');
       } else {
-        labelG.attr('transform', "translate(".concat(width - props.margin.left - props.margin.right - 20, ",").concat((props.height - props.margin.top - props.margin.bottom) * .5, ")")).style('text-anchor', 'end');
+        labelG.attr('transform', "translate(".concat(width - props.margin.left - props.margin.right - 10, ",").concat((props.height - props.margin.top - props.margin.bottom) * .5, ")")).style('text-anchor', 'end');
+      }
+
+      var touchBox = g.appendSelect('g.dummy-container').appendSelect('rect').attr('height', props.height - props.margin.top).attr('width', width - props.margin.left - props.margin.right + 2).style('opacity', 0);
+      touchBox.on('mouseover mousemove touchenter touchstart touchmove', lodash.throttle(function () {
+        if (!d3.event) return;
+        var coordinates = d3.mouse(g.node());
+        var highlightDate = dateFormatMatch(new Date(xScale.invert(coordinates[0])));
+        var obj = data.tests.filter(function (d) {
+          return dateFormatMatch(d.parsedDate) === highlightDate;
+        })[0];
+
+        if (highlightDate && obj) {
+          showTooltip(highlightDate, obj);
+        }
+      }, 50), true);
+      touchBox.on('mouseout touchleave touchcancel', hideTooltip);
+
+      if (props.labels) {
+        var labelContainer = g.appendSelect('g.labels');
+        var useDay = data.tests.length / 2;
+        var anchor = 'middle';
+        var labelX = xScale(data.tests[useDay].date);
+
+        if (labelX < width * 0.18) {
+          anchor = 'start';
+        } // avg label
+
+
+        var avgLabel = labelContainer.appendSelect('g.avg-label').attr('transform', "translate(".concat(xScale(data.tests[useDay].parsedDate), ",").concat(yScale(data.tests[useDay].posRate) - props.height / 20, ")"));
+        avgLabel.appendSelect('line').attr('x1', 0).attr('x2', 0).attr('y1', props.height / 20).attr('y2', 0);
+        avgLabel.appendSelect('text').attr('dx', -10).attr('dy', -5).style('text-anchor', anchor).text(Mustache.render(props.text.avg, {
+          average: props.avg_days
+        })); // new numbers label
+      } else {
+        g.select('g.labels').remove();
+      } // tooltip
+
+
+      var tooltipBox = this.selection().appendSelect('div.custom-tooltip');
+      var ttInner = tooltipBox.appendSelect('div.tooltip-inner');
+
+      function showTooltip(date, obj) {
+        g.select('.labels').style('opacity', 0);
+        var coords = [];
+        coords[0] = xScale(obj.parsedDate) + props.margin.left;
+        coords[1] = yScale(obj.posRate) + props.margin.top;
+        var q = getTooltipType(coords, [props.height, width]);
+        tooltipBox.classed('tooltip-active', true).classed('tooltip-ne tooltip-s tooltip-n tooltip-sw tooltip-nw tooltip-se', false).style('left', "".concat(coords[0], "px")).style('top', "".concat(coords[1], "px")).classed("tooltip-".concat(q), true);
+        ttInner.appendSelect('div.tt-header').text(props.formatters.tooltipDateFormatter(obj.parsedDate));
+        ttInner.appendSelect('div.tt-row').text(Mustache.render(props.text.tooltip, {
+          rate: Math.floor(obj.posRate),
+          cases: props.formatters.tooltipNumberFormatter(Math.floor(obj.caseMean)),
+          tests: props.formatters.tooltipNumberFormatter(Math.floor(obj.mean))
+        }));
+      }
+
+      function hideTooltip() {
+        g.select('.labels').style('opacity', 1);
+        g.select('.highlight-bar').attr('height', function (d) {
+          return props.height;
+        }).attr('y', function (d) {
+          return 0;
+        }).style('opacity', 0).classed('active', false);
+        tooltipBox.classed('tooltip-active', false);
+      }
+
+      function getTooltipType(coords, size) {
+        var l = [];
+        var ns_threshold = 4;
+
+        if (props.tooltip_default == 'top') {
+          l.push('s');
+        } else if (props.tooltip_default == 'bottom') {
+          l.push('n');
+        } else {
+          if (coords[1] > size[1] / ns_threshold) {
+            l.push('s');
+          } else {
+            l.push('n');
+          }
+        }
+
+        if (coords[0] > size[0] / 2) {
+          l.push('e');
+        }
+
+        if (coords[0] < size[0] / 2) {
+          l.push('w');
+        }
+
+        return l.join('');
       }
 
       return this;

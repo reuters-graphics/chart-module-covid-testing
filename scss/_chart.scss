@@ -7,18 +7,33 @@ body{
   background: $dark-blue;
 }
 
+@mixin chart-text { // same as p-1
+  font-size: 13px!important;
+  line-height: 18px;
+  font-weight: 400;
+  letter-spacing: 0.4px;
+}
+
 #{$TestingChart-container} {
-  .ref-label{
-    font-size: .9rem;
+  position: relative;
+  .ref-label,.labels{
+    pointer-events: none;
+    font-size: 13px;
+    line-height: 18px;
+    font-weight: 400;
+    letter-spacing: .4px;
+    color: hsla(0,0%,100%,.75);
+    fill: hsla(0,0%,100%,.75);
+    text-shadow: 2px 2px 2px #2f353f, 2px 2px 2px #2f353f, 0 -2px 0 #2f353f, -2px 0 0 #2f353f;
+    line{
+      stroke: hsla(0,0%,100%,.75);
+    }
   }
   /* Write your chart styles here */
   .domain{
     display: none;
   }
-  .base-line{
-    stroke: $half-white;
-    stroke-width: 1;
-  }
+
   .axis{
     text{
       font-family: $font-family-sans-serif;
@@ -38,4 +53,207 @@ body{
       }
     }
   }
+}
+
+.tooltip-inner {
+  font-family: $font-family-sans-serif;
+  text-align: left;
+  min-width: 170px !important;
+
+  p {
+    margin-bottom: 0;
+    font-family: $font-family-sans-serif;
+    font-size: 0.875rem;
+
+    &.date {
+      font-weight: 600;
+    }
+
+    span.val {
+      font-weight: 400;
+    }
+  }
+}
+
+.has-tooltip {
+  position: relative;
+  cursor: pointer;
+  display: inline-block;
+}
+
+.custom-tooltip {
+  transition: top 0.2s ease-out;
+  position: absolute;
+  z-index: 9999;
+  display: none;
+  pointer-events: none;
+  width: 0px;
+  height: 0px;
+  transform: translate(-50%, -50%);
+
+  &.tooltip-active {
+    display: block;
+  }
+
+  .tooltip-inner {
+    position: relative;
+    border-radius: 2px;
+    background: #fff;
+    padding: 2px 10px;
+    max-width: 220px;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23);
+    @media (min-width: 400px) {
+      max-width: 220px;
+    }
+
+    &:after {
+      display: block;
+      content: ' ';
+      background: #fff;
+      width: 10px;
+      height: 10px;
+      border-top-right-radius: 2px;
+      box-shadow: 1px -2px -1px rgba(0,0,0,0.19);
+      position: absolute;
+    }
+  }
+}
+
+.tooltip-n .tooltip-inner {
+  transform: translate(-50%, 0%);
+  top: 20px;
+  left: 0px;
+
+  &:after {
+    top: -9px;
+    left: 50%;
+    transform: rotate(-45deg) translate(-50%, 0%);
+  }
+}
+
+.tooltip-s .tooltip-inner {
+  transform: translate(-50%, -100%);
+  bottom: 20px;
+  left: 0px;
+
+  &:after {
+    top: 100%;
+    left: 50%;
+    transform: translate(-50%, -4px) rotate(135deg);
+  }
+}
+
+.tooltip-nw .tooltip-inner {
+  transform: translate(-10%, 0%);
+  top: 20px;
+  left: 0px;
+
+  &:after {
+    top: -9px;
+    left: 10%;
+    transform: rotate(-45deg) translate(-50%, 0%);
+  }
+}
+
+.tooltip-ne .tooltip-inner {
+  transform: translate(-90%, 0%);
+  top: 20px;
+  right: 0px;
+
+  &:after {
+    top: -9px;
+    left: 90%;
+    transform: rotate(-45deg) translate(-50%, 0%);
+  }
+}
+
+.tooltip-sw .tooltip-inner {
+  transform: translate(-10%, -100%);
+  bottom: 20px;
+  left: 0px;
+
+  &:after {
+    top: 100%;
+    left: 10%;
+    transform: translate(-50%, -4px) rotate(135deg);
+  }
+}
+
+.tooltip-se .tooltip-inner {
+  transform: translate(-90%, -100%);
+  bottom: 20px;
+  right: 0px;
+
+  &:after {
+    top: 100%;
+    left: 90%;
+    transform: translate(-50%, -4px) rotate(135deg);
+  }
+}
+
+.tt-header {
+  color: #4a4a4a;
+  font-weight: bold;
+  font-size: .9rem;
+  
+  width: 100%;
+  display: inline-block;
+
+  @media (max-width: 450px) {
+    font-size: 12px;
+  }
+}
+
+.tt-row {
+  font-size: .8em;
+  padding-bottom: 5px;
+}
+
+.custom-tooltip{
+  transition: top 0.2s ease-out;
+
+  .tooltip-inner {
+    box-shadow: none;
+    background: rgba(47,53,63,0.95);
+    border-radius: 4px;
+    padding: 4px 8px;
+
+    min-width: 100px!important;
+    width: max-content;
+
+    &:after {
+      box-shadow: none;
+      background: $dark-blue;
+      border-right: 1.4px solid white;
+      border-top: 1.4px solid white;
+    }
+  }
+}
+.tooltip-se .tooltip-inner{
+  text-align: right;
+  padding-right: 4px;
+}
+.tooltip-sw .tooltip-inner{
+  text-align: left;
+  padding-left: 4px;
+}
+.tooltip-ne .tooltip-inner{
+  text-align: right;
+  padding-right: 4px;
+}
+.tooltip-nw .tooltip-inner{
+  text-align: left;
+  padding-left: 4px;
+}
+.tt-header {
+  @include chart-text;
+  color: white;
+}
+
+.tt-row {
+  @include chart-text;
+  font-weight: 600;
+  fill: white;
+  color: white;
+  padding: 0;
 }
